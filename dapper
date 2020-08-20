@@ -1,0 +1,79 @@
+List<ESD_CARD_join_vESD_REC> list = new List<ESD_CARD_join_vESD_REC>();
+            StringBuilder SQL = new StringBuilder();
+            var dynamicParams = new DynamicParameters();    //動態參數
+
+            //建立sql查詢語法
+            SQL.Append(" SELECT TOP(@COUNT) *");
+            dynamicParams.Add("COUNT", data.COUNT);
+            SQL.Append("   FROM ESD_CARD a ");
+            SQL.Append("   JOIN  ESD_REC b ");
+            SQL.Append("   ON  a.CARD = b.CARD_ID");
+            SQL.Append("   JOIN  ESD_ADD_REF c ");
+            SQL.Append("   ON  b.ADDRESS = c.ADDRESS");
+            SQL.Append("  LEFT JOIN  ESD_EMP d ");
+            SQL.Append("   ON  a.EMP_NO = d.EMP_NO");
+            SQL.Append("  WHERE     1=1 ");
+            
+           
+
+            if (!string.IsNullOrEmpty(data.EMP_NO))
+                {
+                    SQL.Append("AND a.EMP_NO = @EMP_NO ");
+                    dynamicParams.Add("EMP_NO", data.EMP_NO);
+                }                
+                
+                if (!string.IsNullOrEmpty(data.NAME))
+                { 
+                    SQL.Append("AND d.NAME = @NAME ");
+                    dynamicParams.Add("NAME", data.NAME);
+                }
+                if (!string.IsNullOrEmpty(data.CARD_ID))
+                {                    
+                    SQL.Append("AND b.CARD_ID = @CARD_ID ");
+                    dynamicParams.Add("CARD_ID", data.CARD_ID);
+                }
+                if (!string.IsNullOrEmpty(data.TEST_DATE_START))
+                {
+                    SQL.Append("AND b.TEST_DATE >= @TEST_DATE_START ");
+                    dynamicParams.Add("TEST_DATE_START", data.TEST_DATE_START);
+                }
+                if (!string.IsNullOrEmpty(data.TEST_TIME_START))
+                {
+                    SQL.Append("AND b.TEST_TIME >= @TEST_TIME_START ");
+                    dynamicParams.Add("TEST_TIME_START", data.TEST_TIME_START);
+                }
+                if (!string.IsNullOrEmpty(data.TEST_DATE_END))
+                {
+                    SQL.Append("AND b.TEST_DATE <= @TEST_DATE_END ");
+                    dynamicParams.Add("TEST_DATE_END", data.TEST_DATE_END);
+                }
+                if (!string.IsNullOrEmpty(data.TEST_TIME_END))
+                {
+                    SQL.Append("AND b.TEST_TIME <= @TEST_TIME_END ");
+                    dynamicParams.Add("TEST_TIME_END", data.TEST_TIME_END);
+                }
+                if (!string.IsNullOrEmpty(data.ADDRESS_ID))
+                {
+                    SQL.Append("AND c.ADDRESS_ID = @ADDRESS_ID ");
+                    dynamicParams.Add("ADDRESS_ID", data.ADDRESS_ID);
+                }
+            //-------------------------------------------------------------------------------------------------------------------
+
+            SQL.Append("   ORDER BY (b.TEST_DATE + TEST_Time) DESC ");
+           
+
+            using (var cn = new Connections().ESDEntities)
+            {                
+                try
+                {
+                    var aa = SQL.ToString();
+                    var bb = dynamicParams;
+                    list = cn.Query<ESD_CARD_join_vESD_REC>(SQL.ToString(), dynamicParams).ToList();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+            }
+            
+            return list;
