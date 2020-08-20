@@ -1,0 +1,8 @@
+public SqlConnection ESDEntities
+        {
+            get
+            {
+                String ConnectionString = System.Web.Configuration.WebConfigurationManager.ConnectionStrings["ESDEntities"].ConnectionString;
+                return new SqlConnection(ConnectionString);
+            }
+        }
