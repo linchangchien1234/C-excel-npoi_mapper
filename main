@@ -1,0 +1,379 @@
+window.onload = function () {    
+    $("input[name = 'starttime']").datepicker({ dateFormat: 'yy-mm-dd' });
+    $("input[name = 'endtime']").datepicker({ dateFormat: 'yy-mm-dd' });
+    for (var i = 0; i < 24; i++) {
+        $("#hrs").append("<option></option>");
+        $("#hre").append("<option></option>");
+    }
+    for (var i = 0; i < 60; i++) {
+        $("#mins").append("<option></option>");
+        $("#mine").append("<option></option>");
+    }
+    for (var i = 0; i < 24; i++) {
+        if (i < 10) {
+            var a = "0" + i;
+            $("#hrs > option:eq(" + (i) + ")").text(a);
+            $("#hrs > option:eq(" + (i) + ")").val(a);
+            $("#hre > option:eq(" + (i) + ")").text(a);
+            $("#hre > option:eq(" + (i) + ")").val(a);
+        } else {
+            $("#hrs > option:eq(" + (i) + ")").text(i);
+            $("#hrs > option:eq(" + (i) + ")").val(i);
+            $("#hre > option:eq(" + (i) + ")").text(i);
+            $("#hre > option:eq(" + (i) + ")").val(i);
+        }
+    }
+    for (var i = 0; i < 60; i++) {
+        if (i < 10) {
+            var a = "0" + i;
+            $("#mins > option:eq(" + (i) + ")").text(a);
+            $("#mins > option:eq(" + (i) + ")").val(a);
+            $("#mine > option:eq(" + (i) + ")").text(a);
+            $("#mine > option:eq(" + (i) + ")").val(a);
+        } else {
+            $("#mins > option:eq(" + (i) + ")").text(i);
+            $("#mins > option:eq(" + (i) + ")").val(i);
+            $("#mine > option:eq(" + (i) + ")").text(i);
+            $("#mine > option:eq(" + (i) + ")").val(i);
+        }
+    }
+    //設定小時預設值
+    $("#hre").val(23);
+    //設定分鐘預設值
+    $("#mine").val(59);     
+}
+//抓取三叉機名稱
+$.when($.ajax({
+    type: 'POST',
+    url: "api/account",
+    contentType: "application/json",
+    data: "account"
+}),
+
+    $.ajax({
+        type: 'POST',
+        url: "api/cardauthority",
+        contentType: "application/json",
+        data: "getAuthority"
+    }),
+    $.ajax({
+        type: 'POST',
+        url: "api/cardmachine",
+        contentType: "application/json",
+        data: "getAuthority"
+    })
+).done(function (data1, data2, data3) {
+    //console.log("data1:" + data1);
+    //console.log(data1[0]);
+    //console.log("data2:");
+    //console.log(data2[0]);
+    //console.log("data3:"); 
+    //console.log(data3[0]);
+
+    if (data1[0] == "LS\\DoveLin") {
+        //若有選擇三叉機種類
+        console.log("帳號正確!");
+        for (var i = 0; i < data2[0].length; i++) {
+            //-----------------------------------------------------------
+            //判斷本機帳號是否有權限
+            if (data1[0] == ("LS\\" + data2[0][i].NAME)) {
+            //建立假帳號做功能測試
+            // AA　BB CC DD EE
+            //if ("AA" == data2[0][i].NAME) {
+            //-----------------------------------------------------------
+
+                console.log("判斷權限!");
+                if (data2[0][i].ADMIN == 'Y') {
+                    console.log("最高權限!");
+                    creatAllMin(data3[0], data3[0].length);
+                    break;
+                } else {
+                    console.log("無最高權限!");
+
+                    for (var j = 0; j < data3[0].length; j++) {
+                        if (j == 0) {
+                            $("select[name = 'cards']").append("<option></option>");
+                            $("select[name = 'cards'] > option:eq(0)").text("請選擇三叉機");
+                            $("select[name = 'cards'] > option:eq(0)").val("index");
+                        }
+                        //console.log(data2[0][0].ADDRESS_ID == data3[0][0].ADDRESS_ID);
+                        var aa = data2[0][i].ADDRESS_ID;
+                        var bb = data3[0][j].ADDRESS_ID.split(' ').join('');
+                        if (aa == bb) {
+                            console.log("擁有卡機權限為: " + data2[0][i].ADDRESS_ID);
+                            $("select[name = 'cards']").append("<option></option>");
+                            $("select[name = 'cards'] > option:eq(" + (i) + ")").text(data2[0][i].ADDRESS_ID + " " + data3[0][j].ADD_SET);
+                            $("select[name = 'cards'] > option:eq(" + (i) + ")").val(data2[0][i].ADDRESS_ID);
+                        }
+                    }
+                }
+            }
+            else
+            {
+               alert("您沒有使用之權限");
+            }
+        }
+    } else {
+        alert("您沒有使用之權限");
+    }
+});
+
+function creatAllMin(data, length) {
+    for (var i = 0; i <= length + 1; i++) {
+        $("select[name = 'cards']").append("<option></option>");
+    }
+    //預設第一項為"請選擇三叉機"
+    $("select[name = 'cards'] > option:eq(0)").text("請選擇三叉機");
+    $("select[name = 'cards'] > option:eq(0)").val("index");
+    $("select[name = 'cards'] > option:eq(1)").text("全部");
+    $("select[name = 'cards'] > option:eq(1)").val("all");
+    //將select option元件設定text與value
+    for (var i = 0; i < length; i++) {
+        $("select[name = 'cards'] > option:eq(" + (i + 2) + ")").text(data[i].ADDRESS_ID + " " + data[i].ADD_SET);
+        $("select[name = 'cards'] > option:eq(" + (i + 2) + ")").val(data[i].ADDRESS_ID);
+    }
+}
+
+
+$("#sendData").click(function (event) {
+    // action goes here!!
+    event.preventDefault();
+    //清空table
+    $("table > tbody").empty();
+
+    var userid = $("input[name = 'userid']").val();
+    var username = $("input[name = 'username']").val();
+    var cardid = $("input[name = 'cardid']").val();
+
+    var hrs = $("#hrs").val();
+    var mins = $("#mins").val();
+    var mine = $("#mine").val();
+    var hre = $("#hre").val();
+    var startdate = $("input[name = 'starttime']")[1].value;
+    var starttime = hrs + mins + "00";
+    var enddate = $("input[name = 'endtime']")[1].value;
+    var endtime = hre + mine + "00";
+
+    var count = $("select[name = 'esdCount']").val();
+    var addset = $("select[name = 'cards']").val();
+
+
+    if (userid == "" && username == "" && cardid == "" && starttime == "" && endtime == "") {
+        alert("請輸入收尋欄位!");
+    } else {
+        var usernameValue;
+        if (username == "") {
+            usernameValue = null;
+        } else {
+            usernameValue = username;
+        }
+        var cardidValue;
+        if (cardid == "") {
+            cardidValue = null;
+        } else {
+            cardidValue = cardid;
+        }
+        console.log(starttime);
+
+
+        var date;
+        var dateForm;
+        var startdateDef;
+        var startdateDefFrom;
+        var time;
+        var nowDateTime = new Date().toLocaleString();
+        nowDateTime = nowDateTime.split('年').join('').split('月').join('').split('日').join('').split(':').join('');
+
+        if (getExplorer() == 'ie' || getExplorer() == undefined) {
+            date = nowDateTime.substr(0, 7);
+            dateForm = nowDateTime.substr(0, 4) + '-' + nowDateTime.substr(3, 2) + '-' + nowDateTime.substr(5, 2);
+            startdateDef = nowDateTime.substr(0, 5) + (parseInt(nowDateTime.substr(5, 2)) - 4);
+            startdateDefFrom = nowDateTime.substr(0, 4) + '-' + nowDateTime.substr(3, 2) + '-' + (parseInt(nowDateTime.substr(5, 2)) - 4);
+            if (nowDateTime.substr(8, 2) == "下午") {
+                time = (parseInt(nowDateTime.substr(11, 2)) + 12) + nowDateTime.substr(13, 2) + nowDateTime.substr(15, 2);
+            } else {
+                time = nowDateTime.substr(11, 6);
+            }
+            console.log('4. ' + nowDateTime);
+        } else if (getExplorer() == 'ie11' || getExplorer() == undefined) {
+            date = nowDateTime.substr(0, 12);
+            dateForm = nowDateTime.substr(0, 6) + '-' + nowDateTime.substr(4, 4) + '-' + nowDateTime.substr(8, 4);
+            startdateDef = nowDateTime.substr(0, 10) + (parseInt(nowDateTime.substr(10, 2) - 4));
+            startdateDefFrom = nowDateTime.substr(0, 6) + '-' + nowDateTime.substr(4, 4) + '-' + (parseInt(nowDateTime.substr(10, 2) - 4));
+            if (nowDateTime.substr(18, 2) == "下午") {
+                time = (parseInt(nowDateTime.substr(21, 2)) + 12) + nowDateTime.substr(25, 2) + nowDateTime.substr(29, 2);
+            } else {
+                time = nowDateTime.substr(21, 10);
+            }
+            console.log('1. ' + date);
+            console.log('2. ' + time);
+
+
+        } else {
+            /*
+            var startdate = $("input[name = 'starttime']").val();
+            var enddate = $("input[name = 'endtime']").val();
+            if ((startdate != "") && (starttime != "") && (endDe == "") && (endtime == "")) {
+                endtime = nowDateTime;                
+            } else if ((starttime == "") && (endtime != "")) {
+                starttime = nowDateTime;               
+            }*/
+        }
+
+        if ((startdate != "") && (enddate == "")) {
+            startdate = startdate.split('-').join('');
+            enddate = date;
+            endtime = time;
+        } else if ((startdate == "") && (enddate != "")) {
+            enddate = enddate.split('-').join('');
+            startdate = date;
+            starttime = time;
+        } else if ((startdate != "") && (enddate != "")) {
+            startdate = startdate.split('-').join('');
+            enddate = enddate.split('-').join('');
+        } else {
+            startdate = startdateDef;
+            $("input[name = 'starttime']")[1].value = startdateDefFrom;
+            enddate = date;
+            $("input[name = 'endtime']")[1].value = dateForm;
+        }
+
+        if (($("select[name = 'cards']").val() == "all") || ($("select[name = 'cards']").val() == "index")) {
+            addset = null;
+        } else {
+            addset = addset;
+        }
+    }
+
+
+    /*
+    console.log(userid);
+    console.log(username);
+    console.log(cardid);
+    console.log(starttime);
+    console.log(endtime);
+    console.log(count);
+    console.log(addset);*/
+    //將收尋keyin之資料建立成物件傳至後端
+
+    var data = {
+        "EMP_NO": userid,
+        "NAME": usernameValue,
+        "CARD_ID": cardidValue,
+        "TEST_DATE_START": startdate,
+        "TEST_TIME_START": starttime,
+        "TEST_DATE_END": enddate,
+        "TEST_TIME_END": endtime,
+        "COUNT": count,
+        "ADDRESS_ID": addset,
+    }
+    console.log(data);
+    //console.log(typeof (data));
+    //AJAX抓取收尋之資料欄位         
+
+    $.ajax({
+        type: 'POST',
+        url: 'api/cardapi',
+        contentType: "application/json",
+        //將物件轉為JSON字串
+        data: JSON.stringify(data),
+        success: function (msg) {
+            console.log('success');
+        }
+    }).then(function (data) {
+        console.log(data);
+        if (data.length == 0) {
+            alert("沒有資料!!");
+        } else {
+            //建立資料列        
+            for (var i = 0; i < data.length; i++) {
+                $("table > tbody").append("<tr></tr>");
+            }
+            //建立資料欄
+            for (var j = 0; j < 9; j++) {
+                $("table > tbody > tr").append("<td></td>");
+            }
+            //將所有資料匯入表格
+            for (var i = 0; i < data.length; i++) {
+                $("table > tbody > tr:eq(" + i + ") > td:eq(0)").text(i + 1);
+                $("table > tbody > tr:eq(" + i + ") > td:eq(1)").text(data[i].EMP_NO);
+                $("table > tbody > tr:eq(" + i + ") > td:eq(2)").text(data[i].NAME);
+                $("table > tbody > tr:eq(" + i + ") > td:eq(3)").text(data[i].CARD_ID);
+                //$("table > tbody > tr:eq(" + i + ") > td:eq(3)").text(data[i].SHFT_TYPE_NAME);
+
+                if (data[i].MR_IO == "0") {
+                    $("table > tbody > tr:eq(" + i + ") > td:eq(4)").text("進");
+                    $("table > tbody > tr:eq(" + i + ") > td:eq(4)").val(data[i].MR_IO);
+                } else {
+                    $("table > tbody > tr:eq(" + i + ") > td:eq(4)").text("出");
+                    $("table > tbody > tr:eq(" + i + ") > td:eq(4)").val(data[i].MR_IO);
+                }
+
+                $("table > tbody > tr:eq(" + i + ") > td:eq(5)").text(data[i].PASS);
+                $("table > tbody > tr:eq(" + i + ") > td:eq(6)").text(data[i].ADDRESS_ID);
+                $("table > tbody > tr:eq(" + i + ")> td:eq(7)").text(data[i].ADD_SET);
+                var testDate = data[i].TEST_DATE;
+                testDate = testDate.substr(0, 4) + '-' + testDate.substr(4, 2) + '-' + testDate.substr(6, 2);
+                var testTime = data[i].TEST_TIME;
+                testTime = testTime.substr(0, 2) + ':' + testTime.substr(2, 2) + ':' + testTime.substr(4, 2);
+
+                $("table > tbody > tr:eq(" + i + ") > td:eq(8)").text((testDate + ' ' + testTime));
+            }
+        }      
+    });
+});
+
+
+
+//RESET所有收尋欄位
+$("#reset").click(function (event) {
+    event.preventDefault();
+    $("input[name = 'userid']").val(" ");
+    $("input[name = 'username']").val(" ");
+    $("input[name = 'cardid']").val(" ");
+    $("input[name = 'starttime']").val(" ");
+    $("input[name = 'endtime']").val(" ");
+    $("#hrs").val("00");
+    $("#mins").val("00");
+    $("#hre").val("23");
+    $("#mine").val("59");
+});
+
+//---------------------------------------------------------------------------------------------------
+//C#處理匯出EXCEL檔案
+$("#changeToEXCEL").click(function (event) {
+    event.preventDefault();
+    //
+    var dataArray = [];
+    var data = {};
+
+    for (var i = 0; i < $("table > tbody > tr").length; i++) {
+        for (var j = 1; j < 9; j++) {
+            data = {
+                "EMP_NO": $("table > tbody > tr:eq(" + i + ") > td:eq(1)").text(),
+                "NAME": $("table > tbody > tr:eq(" + i + ") > td:eq(2)").text(),
+                "CARD_ID": $("table > tbody > tr:eq(" + i + ") > td:eq(3)").text(),
+                "MR_IO": $("table > tbody > tr:eq(" + i + ") > td:eq(4)").val(),
+                "PASS": $("table > tbody > tr:eq(" + i + ") > td:eq(5)").text(),
+                "ADDRESS_ID": $("table > tbody > tr:eq(" + i + ") > td:eq(6)").text(),
+                "ADD_SET": $("table > tbody > tr:eq(" + i + ") > td:eq(7)").text(),
+                "TEST_DATE": $("table > tbody > tr:eq(" + i + ") > td:eq(8)").text()
+            }
+        }
+        dataArray.push(data);
+    }
+    console.log(JSON.stringify(dataArray));
+ 
+    $.ajax({
+        type: 'POST',
+        url: 'api/ExcelSave',
+        contentType: "application/json",
+        //將物件轉為JSON字串
+        data: JSON.stringify(dataArray),
+        success: function (msg) {
+            console.log('success');
+        }
+    }).then(function (data) {
+        alert("Save OK!");
+    });
+});
