@@ -1,0 +1,12 @@
+public object getData()
+            {
+                var str = System.IO.File.ReadLines(@"D:\Dovelin\test.txt");
+                string jsonReturn = JsonConvert.SerializeObject(str);
+                jsonReturn = jsonReturn.Replace("\\", string.Empty);
+                jsonReturn = jsonReturn.Remove(0, 2);
+                var a = Convert.ToInt32(jsonReturn.Length - 2);
+                jsonReturn = jsonReturn.Remove(a);
+                var data = JsonConvert.DeserializeObject<object>(jsonReturn);
+                return data;
+            }
+        
