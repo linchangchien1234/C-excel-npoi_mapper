@@ -1,0 +1,25 @@
+ public HttpResponseMessage Post([FromBody] object value)
+        {
+            //EXCEL_SAVE obj = new EXCEL_SAVE();
+            var obj = new EXCEL_SAVE();
+            //將前端post之json資料轉為string，再轉為<ESD_CARD_join_vESD_REC>物件使用
+            var a = value;
+            string json = JsonConvert.SerializeObject(value);
+            List<EXCEL_SAVE> data = JsonConvert.DeserializeObject<List<EXCEL_SAVE>>(json);
+            
+            //將資料轉為EXCEL檔案
+            //設定存取位置
+            string path = @"D:\Dovelin\ESD系統\Dapper\ESDProject\ESDProject\App_Data";
+            //設定位置+檔名+副檔名
+            string filename = System.IO.Path.Combine(path, DateTime.Now.ToString("yyyyMMdd-hhmmss") + ".xlsx");
+            var mapper = new Mapper();
+            //設定存放活頁部與是否可複寫
+            mapper.Put(data, "sheet1", true);
+            //儲存檔案
+            mapper.Save(filename);
+            mapper = null;
+
+            string jsonReturn = JsonConvert.SerializeObject(data);
+            object dataReturnValue = JsonConvert.DeserializeObject<object>(jsonReturn);
+            return Request.CreateResponse(HttpStatusCode.OK, dataReturnValue);           
+        }
